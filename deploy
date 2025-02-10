@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(dirname $0)
+
+set -o allexport
+source "$SCRIPT_DIR/.env" || { echo "Failed to read the configuration file."; exit 1; }
+set +o allexport
+
+timestamp=$(date +%Y%m%d_%H%M%S)
+deploy_dir="$DEPLOY_BASE_DIR/deploy_$timestamp"
+
+echo Deploying to $deploy_dir
+rsync -avz --delete --progress "$CODE_DIR/" "$SERVER:$deploy_dir" || { echo "Failed to transfer code"; exit 1; }
+
+ssh $SERVER "ln -snfv $deploy_dir $PUBLIC_HTML_LINK" || { echo "Failed to create/update symbolic link"; exit 1; }
